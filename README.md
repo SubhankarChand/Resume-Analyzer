@@ -55,9 +55,9 @@ Run the App:
 streamlit run src/app.py
 ```
 ##🧠 How it WorksPreprocessing: 
--- Cleans text by removing URLs, punctuation, and non-ASCII characters.Vectorization: Converts the Job Description and Resume into numerical vectors using TF-IDF.
--- Similarity: Measures the cosine of the angle between the two vectors ($$Cosine\ Similarity = \frac{A \cdot B}{||A|| ||B||}$$) to determine the match percentage.
--- Gap Analysis: Compares keyword sets to find what specific skills the candidate is missing.Developed by: Subhankar ChandYear: 2026
+* ** Cleans text by removing URLs, punctuation, and non-ASCII characters.Vectorization: Converts the Job Description and Resume into numerical vectors using TF-IDF.
+* ** Similarity: Measures the cosine of the angle between the two vectors ($$Cosine\ Similarity = \frac{A \cdot B}{||A|| ||B||}$$) to determine the match percentage.
+* ** Gap Analysis: Compares keyword sets to find what specific skills the candidate is missing.Developed by: Subhankar ChandYear: 2026
 ---
 
 ## **4. Project Description for GitHub (About section)**
