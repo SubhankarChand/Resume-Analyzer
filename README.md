@@ -45,12 +45,12 @@ venv\Scripts\activate
 ```bash
 source venv/bin/activate
 ```
-Install Dependencies:
+## Install Dependencies:
 ```bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
-Run the App:
+## Run the App:
 ```bash
 streamlit run src/app.py
 ```
