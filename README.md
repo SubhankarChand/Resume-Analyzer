@@ -60,10 +60,4 @@ streamlit run src/app.py
 *  Gap Analysis: Compares keyword sets to find what specific skills the candidate is missing.Developed by: Subhankar ChandYear: 2026
 ---
 
-## **4. Project Description for GitHub (About section)**
 
-On the right side of your GitHub repository page, under the **"About"** section, paste this:
-
-> "An AI-powered Resume Analyzer using NLP (SpaCy & Scikit-learn) to automate resume screening. Features Skill Gap detection, TF-IDF similarity scoring, and professional PDF report generation."
-
-**Next Step:** Once your site is live, would you like me to help you write a **LinkedIn post** to share your project with your network?
