@@ -23,10 +23,10 @@ An intelligent Resume Screening tool built with **Python**, **SpaCy**, and **Str
 * **Reporting:** FPDF
 
 ## 📸 Screenshots
-![Main Interface](screenshots/image_d47282.png)
+![Main Interface](screenshots/image1.png)
 *Figure 1: Main Dashboard with JD and Resume upload columns.*
 
-![Analysis Results](screenshots/image_d48962.png)
+![Analysis Results](screenshots/image2.png)
 *Figure 2: Match Score and Skill Gap tags.*
 
 ## ⚙️ Local Installation
