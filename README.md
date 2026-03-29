@@ -35,14 +35,25 @@ An intelligent Resume Screening tool built with **Python**, **SpaCy**, and **Str
    ```bash
    git clone [https://github.com/YOUR_USERNAME/Resume-Analyzer.git](https://github.com/YOUR_USERNAME/Resume-Analyzer.git)
    cd Resume-Analyzer
+   ```
 Set up Virtual Environment:Bashpython -m venv venv
-# Activate Windows:
+## Activate Windows:
+```bash
 venv\Scripts\activate
-# Activate Mac/Linux:
+```
+## Activate Mac/Linux:
+```bash
 source venv/bin/activate
-Install Dependencies:Bashpip install -r requirements.txt
+```
+Install Dependencies:
+```bash
+pip install -r requirements.txt
 python -m spacy download en_core_web_sm
-Run the App:Bashstreamlit run src/app.py
+```
+Run the App:
+```bash
+Bashstreamlit run src/app.py
+```
 🧠 How it WorksPreprocessing: Cleans text by removing URLs, punctuation, and non-ASCII characters.Vectorization: Converts the Job Description and Resume into numerical vectors using TF-IDF.Similarity: Measures the cosine of the angle between the two vectors ($$Cosine\ Similarity = \frac{A \cdot B}{||A|| ||B||}$$) to determine the match percentage.Gap Analysis: Compares keyword sets to find what specific skills the candidate is missing.Developed by: Subhankar ChandYear: 2026
 ---
 
