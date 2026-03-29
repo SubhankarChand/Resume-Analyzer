@@ -24,7 +24,11 @@ def create_pdf_report(score, matched, missing):
     
     return pdf.output(dest='S').encode('latin-1') # Return as bytes
 
-nlp = spacy.load("en_core_web_sm")
+#nlp = spacy.load("en_core_web_sm")
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    nlp = spacy.blank("en") 
 
 def extract_text(file):
     """Extract text safely from PDF."""
