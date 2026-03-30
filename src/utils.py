@@ -123,4 +123,4 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
     pdf.set_text_color(150, 150, 150)
     pdf.cell(0, 10, "AI Resume Analyzer Pro | Engineering Project 2026", align='C')
 
-    return pdf.output()
+    return bytes(pdf.output())
