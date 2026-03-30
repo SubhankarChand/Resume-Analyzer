@@ -1,8 +1,7 @@
-streamlit
-spacy
-PyPDF2
-scikit-learn
-pandas
-fpdf
+streamlit==1.32.0
+spacy==3.7.2
+PyPDF2==3.0.1
+scikit-learn==1.4.0
+pandas==2.2.0
+fpdf==1.7.2
 en_core_web_sm
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
