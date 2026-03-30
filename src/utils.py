@@ -29,7 +29,8 @@ def get_keywords(text):
         'role', 'skills', 'responsibilities','job', 'description', 'position', 'company', 
         'business', 'industry', 'opportunities', 'growth', 'development', 'culture', 'values', 
         'mission','full','tools','knowledge','ability','excellent','good','proven',
-        'demonstrated','solid','extensive','experience','position'
+        'demonstrated','solid','extensive','experience','position','may', 'the', 'with',
+        'from', 'for', 'upon', 'questions', 'prorated', 'solely', 'manner', 'ones', 'basic'
     }
     # Find words with at least 3 characters
     words = set(re.findall(r'\b\w{3,}\b', text.lower()))
@@ -73,13 +74,16 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
     
     pdf.set_draw_color(0, 51, 102)
     pdf.line(10, 52, 200, 52)
-    pdf.ln(10)
+    pdf.ln(5)
 
     # Category Scores
-    pdf.set_font("Arial", '', 12)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(200, 8, f"Technical Skill Match: {t_score}%", ln=True)
-    pdf.cell(200, 8, f"Soft Skill Match: {s_score}%", ln=True)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.rect(10, 60, 190, 25, 'F') # Light gray background box
+    pdf.set_xy(12, 62)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(60, 10, f"Overall ATS Match: {score}%", ln=0)
+    pdf.cell(60, 10, f"Technical Match: {t_score}%", ln=0)
+    pdf.cell(60, 10, f"Soft Skill Match: {s_score}%", ln=1)
     
     # Overall ATS Score
     pdf.ln(2)
@@ -118,7 +122,7 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
     pdf.multi_cell(0, 7, verdict)
 
     # Footer
-    pdf.set_y(-20)
+    pdf.set_y(-15)
     pdf.set_font("Arial", 'I', 8)
     pdf.set_text_color(150, 150, 150)
     pdf.cell(0, 10, "AI Resume Analyzer Pro | Engineering Project 2026", align='C')
