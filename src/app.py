@@ -1,30 +1,19 @@
 import streamlit as st
 from processor import extract_text, get_entities, match_score
-from utils import clean_text, get_keywords
-from utils import clean_text, get_keywords, create_pdf_report
+from utils import clean_text, get_keywords, create_pdf_report, categorize_keywords
 
 st.set_page_config(page_title="AI Resume Analyzer Pro", layout="wide")
 
-# Custom CSS for better styling
+# Custom UI Styling
 st.markdown("""
     <style>
-    .skill-tag {
-        background-color: #e1e4e8;
-        color: #0366d6;
-        padding: 5px 10px;
-        border-radius: 15px;
-        margin: 5px;
-        display: inline-block;
-        font-size: 14px;
-    }
+    .metric-card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid #0366d6; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("📄 AI Resume Analyzer (NLP)")
 
-# --- SESSION STATE ---
 if "jd_text" not in st.session_state: st.session_state.jd_text = ""
-if "resume_file" not in st.session_state: st.session_state.resume_file = None
 
 col1, col2 = st.columns(2)
 
@@ -32,8 +21,7 @@ with col1:
     st.subheader("Step 1: Job Description")
     jd_option = st.radio("Input Type:", ["Paste Text", "Upload PDF"], horizontal=True)
     if jd_option == "Paste Text":
-        jd_input = st.text_area("Paste JD:", height=250, value=st.session_state.jd_text)
-        st.session_state.jd_text = jd_input
+        st.session_state.jd_text = st.text_area("Paste JD:", height=250, value=st.session_state.jd_text)
     else:
         jd_file = st.file_uploader("Upload JD", type="pdf", key="jd_up")
         if jd_file: st.session_state.jd_text = extract_text(jd_file)
@@ -41,59 +29,59 @@ with col1:
 with col2:
     st.subheader("Step 2: Resume")
     uploaded_file = st.file_uploader("Upload Resume", type="pdf", key="res_up")
-    if uploaded_file: st.session_state.resume_file = uploaded_file
 
 if st.button("Analyze Now", type="primary", use_container_width=True):
-    if st.session_state.jd_text and st.session_state.resume_file:
-        with st.spinner("Analyzing depth of match..."):
-            raw_resume = extract_text(st.session_state.resume_file)
+    if st.session_state.jd_text and uploaded_file:
+        with st.spinner("Running NLP Pipeline..."):
+            # A. Extract & Find Name
+            raw_resume = extract_text(uploaded_file)
+            entities = get_entities(raw_resume)
+            user_name = next((e[0] for e in entities if e[1] == 'PERSON'), None)
+            if not user_name:
+                lines = [line.strip() for line in raw_resume.split('\n') if line.strip()]
+                user_name = lines[0] if lines else "Candidate"
+            
+            # B. Processing & Scoring
             c_resume = clean_text(raw_resume)
             c_jd = clean_text(st.session_state.jd_text)
-            
             score = match_score(c_resume, c_jd)
             
-            # --- SKILL GAP DETECTION ---
+            # C. Keyword & Category Analysis
             jd_keys = get_keywords(c_jd)
             res_keys = get_keywords(c_resume)
             missing = jd_keys - res_keys
             matched = jd_keys & res_keys
 
-            # --- RESULTS UI ---
+            tech_m, soft_m, other_m = categorize_keywords(matched)
+            tech_miss, soft_miss, other_miss = categorize_keywords(missing)
+
+            def calc_cat(m, miss):
+                total = len(m) + len(miss)
+                return round((len(m)/total)*100, 2) if total > 0 else 0
+
+            t_score = calc_cat(tech_m, tech_miss)
+            s_score = calc_cat(soft_m, soft_miss)
+
+            # D. Results UI
             st.divider()
-            col_left, col_right = st.columns([1, 2])
-            
-            with col_left:
-                st.metric("Match Score", f"{score}%")
-                st.progress(score / 100)
-                
-            with col_right:
-                if score >= 70:
-                    st.success("✅ Strong Match! Your profile aligns with the core requirements.")
-                else:
-                    st.warning("⚠️ Improvement Needed: Look at the missing keywords below.")
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Overall Match", f"{score}%")
+            c2.metric("Tech Match", f"{t_score}%")
+            c3.metric("Soft Skills", f"{s_score}%")
 
-            st.subheader("Skill Analysis")
-            tab1, tab2 = st.tabs(["Matched Keywords", "Missing Keywords (Skill Gap)"])
+            tab1, tab2, tab3 = st.tabs(["✅ Matched", "❌ Skill Gap", "📥 Download"])
             
-            # Corrected Tab 1 (Matched Keywords)
             with tab1:
-                if matched:
-                    st.write("These keywords were found in both:")
-                    # The closing bracket for .join() is now BEFORE the comma
-                    st.write(" ".join([f'<span class="skill-tag">{m}</span>' for m in list(matched)[:20]]), unsafe_allow_html=True)
+                st.write(f"**Candidate:** {user_name}")
+                st.write("**Technical:** " + ", ".join(tech_m))
+                st.write("**Soft Skills:** " + ", ".join(soft_m))
             
-            # Corrected Tab 2 (Missing Keywords)
             with tab2:
-                if missing:
-                    st.write("Consider adding these to your resume:")
-                    # The closing bracket for .join() is now BEFORE the comma
-                    st.write(" ".join([f'<span class="skill-tag" style="color:red;">{m}</span>' for m in list(missing)[:20]]), unsafe_allow_html=True)
-            # --- DOWNLOAD REPORT ---
-            report_text = f"Resume Analysis Report\nScore: {score}%\n\nMatched: {list(matched)[:10]}\n\nMissing: {list(missing)[:10]}"
-            st.download_button("Download Analysis Report", report_text, file_name="analysis_report.txt")
-            
-            pdf_data = create_pdf_report(score, matched, missing)
-            st.download_button("Download Official PDF Report", pdf_data, file_name="Resume_Analysis.pdf", mime="application/pdf")
+                st.error(f"Missing Tech: {', '.join(tech_miss)}")
+                st.warning(f"Missing Soft Skills: {', '.join(soft_miss)}")
 
+            with tab3:
+                pdf_data = create_pdf_report(score, matched, missing, t_score, s_score, user_name)
+                st.download_button("Download Official PDF Report", pdf_data, file_name=f"{user_name}_Report.pdf", mime="application/pdf")
     else:
-        st.error("Please provide both inputs.")
+        st.error("Please provide both JD and Resume.")
