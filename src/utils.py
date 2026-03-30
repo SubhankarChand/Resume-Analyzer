@@ -1,38 +1,47 @@
 import re
 import string
+import spacy
 from fpdf import FPDF
 from datetime import date
 
+# Load spaCy once at the top to save memory
+try:
+    nlp = spacy.load("en_core_web_sm")
+except:
+    # Fallback for local environments if model isn't linked
+    import en_core_web_sm
+    nlp = en_core_web_sm.load()
+
 def clean_text(text):
-    """Cleans text for NLP processing, preserving slashes for AI/ML terms."""
+    """Cleans text for NLP processing, preserving internal structure."""
     text = str(text).lower()
     text = re.sub(r'http\S+\s*', ' ', text)
     text = re.sub(r'RT|cc', ' ', text)
     text = re.sub(r'#\S+', '', text)
     text = re.sub(r'@\S+', ' ', text)
     text = text.replace('/', ' ').replace('-', ' ')
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    text = re.sub(r'[^\x00-\x7f]', ' ', text)
-    text = re.sub(r'\s+', ' ', text)
+    # We keep it simple here; spaCy handles the rest
     return text.strip()
 
 def get_keywords(text):
-    """Extracts meaningful words by filtering out extensive 'Corporate Fluff'."""
-    universal_stop_words = {
-        'candidate', 'join', 'details', 'pvt', 'limited', 'office', 'will', 
-        'has', 'using', 'work', 'strong', 'nextgeneration', 'preferred', 
-        'qualifications', 'requirements', 'apply', 'team', 'world', 'seeking', 
-        'looking', 'plus', 'benefits', 'equal', 'opportunity', 'within', 'into',
-        'needed', 'several', 'provide', 'working', 'deliver', 'kept', 'summary', 
-        'send', 'leverage', 'you', 'towards', 'including', 'across', 'highly', 'based', 
-        'role', 'skills', 'responsibilities','job', 'description', 'position', 'company', 
-        'business', 'industry', 'opportunities', 'growth', 'development', 'culture', 'values', 
-        'mission','full','tools','knowledge','ability','excellent','good','proven',
-        'demonstrated','solid','extensive','experience','may', 'the', 'with',
-        'from', 'for', 'upon', 'questions', 'prorated', 'solely', 'manner', 'ones', 'basic'
+    """
+    Advanced Statistical Filtering using POS Tagging.
+    Only extracts Nouns and Proper Nouns, automatically ignoring
+    adverbs (ready), prepositions (through), and common verbs.
+    """
+    doc = nlp(text)
+    
+    # We only want Nouns (NN/NNS) and Proper Nouns (NNP)
+    # This automatically filters out "well", "ready", "daily", "through", etc.
+    keywords = {
+        token.text.lower() 
+        for token in doc 
+        if token.pos_ in ['NOUN', 'PROPN'] 
+        and not token.is_stop 
+        and len(token.text) > 2
     }
-    words = set(re.findall(r'\b\w{3,}\b', text.lower()))
-    return words - universal_stop_words
+    
+    return keywords
 
 def categorize_keywords(keywords):
     """Splits keywords into Technical and Soft Skill buckets."""
@@ -111,7 +120,7 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
     pdf.multi_cell(0, 6, verdict)
 
     # Footer
-    pdf.set_y(-15)
+    pdf.set_y(-12)
     pdf.set_font("Arial", 'I', 8)
     pdf.set_text_color(150, 150, 150)
     pdf.cell(0, 10, "AI Resume Analyzer Pro | Engineering Project 2026", align='C')
