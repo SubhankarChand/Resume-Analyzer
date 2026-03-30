@@ -4,11 +4,10 @@ import spacy
 from fpdf import FPDF
 from datetime import date
 
-# Load spaCy once at the top to save memory
+# Load spaCy once at the top
 try:
     nlp = spacy.load("en_core_web_sm")
 except:
-    # Fallback for local environments if model isn't linked
     import en_core_web_sm
     nlp = en_core_web_sm.load()
 
@@ -20,19 +19,14 @@ def clean_text(text):
     text = re.sub(r'#\S+', '', text)
     text = re.sub(r'@\S+', ' ', text)
     text = text.replace('/', ' ').replace('-', ' ')
-    # We keep it simple here; spaCy handles the rest
     return text.strip()
 
 def get_keywords(text):
     """
     Advanced Statistical Filtering using POS Tagging.
-    Only extracts Nouns and Proper Nouns, automatically ignoring
-    adverbs (ready), prepositions (through), and common verbs.
+    Extracts Nouns/Proper Nouns, ignoring stop words and junk parts of speech.
     """
     doc = nlp(text)
-    
-    # We only want Nouns (NN/NNS) and Proper Nouns (NNP)
-    # This automatically filters out "well", "ready", "daily", "through", etc.
     keywords = {
         token.text.lower() 
         for token in doc 
@@ -40,7 +34,6 @@ def get_keywords(text):
         and not token.is_stop 
         and len(token.text) > 2
     }
-    
     return keywords
 
 def categorize_keywords(keywords):
@@ -55,26 +48,31 @@ def categorize_keywords(keywords):
         'negotiation', 'strategy', 'planning', 'mentoring', 'presentation', 'analytical', 
         'creativity', 'adaptability', 'agile', 'scrum', 'organization', 'time-management'
     }
-    
     tech_m = [w for w in keywords if w in tech_lexicon]
     soft_m = [w for w in keywords if w in soft_lexicon]
     return tech_m, soft_m
 
 def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
-    """Generates a professional, single-page PDF Analysis Report."""
+    """Generates a professional, Unicode-safe PDF Analysis Report."""
     pdf = FPDF()
     pdf.add_page()
     pdf.rect(5, 5, 200, 287) 
 
+    # --- ENCODING SAFETY HELPER ---
+    def clean_for_pdf(text_list):
+        raw_text = ", ".join(list(text_list)[:25])
+        # Removes characters that cannot be rendered in standard PDF fonts
+        return raw_text.encode('latin-1', 'ignore').decode('latin-1')
+
     # Header
-    pdf.set_font("Arial", 'B', 11)
+    pdf.set_font("helvetica", 'B', 11)
     pdf.set_text_color(100, 100, 100)
-    pdf.cell(100, 10, f"Candidate: {user_name.upper()}", ln=0)
+    pdf.cell(100, 10, f"Candidate: {user_name.upper().encode('latin-1', 'ignore').decode('latin-1')}", ln=0)
     pdf.cell(90, 10, f"Date: {date.today()}", ln=1, align='R')
 
     # Title
     pdf.ln(2)
-    pdf.set_font("Arial", 'B', 22)
+    pdf.set_font("helvetica", 'B', 22)
     pdf.set_text_color(0, 51, 102) 
     pdf.cell(200, 15, "RESUME ANALYSIS REPORT", ln=1, align='C')
     pdf.line(10, 48, 200, 48)
@@ -84,7 +82,7 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
     pdf.set_fill_color(240, 240, 240)
     pdf.rect(10, 55, 190, 20, 'F') 
     pdf.set_xy(12, 57)
-    pdf.set_font("Arial", 'B', 11)
+    pdf.set_font("helvetica", 'B', 11)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(60, 8, f"Technical Match: {t_score}%", ln=0)
     pdf.cell(60, 8, f"Soft Skill Match: {s_score}%", ln=0)
@@ -96,21 +94,21 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
 
     # Sections
     pdf.set_xy(10, 80)
-    pdf.set_font("Arial", 'B', 12)
+    pdf.set_font("helvetica", 'B', 12)
     pdf.cell(200, 10, "1. Key Strengths (Matched Keywords)", ln=1)
-    pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 6, ", ".join(list(matched)[:25]))
+    pdf.set_font("helvetica", size=10)
+    pdf.multi_cell(0, 6, clean_for_pdf(matched))
 
     pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
+    pdf.set_font("helvetica", 'B', 12)
     pdf.cell(200, 10, "2. Missing Competencies & Keywords", ln=1)
-    pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 6, ", ".join(list(missing)[:25]))
+    pdf.set_font("helvetica", size=10)
+    pdf.multi_cell(0, 6, clean_for_pdf(missing))
 
     pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
+    pdf.set_font("helvetica", 'B', 12)
     pdf.cell(200, 10, "3. Final Verdict & Recommendation", ln=1)
-    pdf.set_font("Arial", size=10)
+    pdf.set_font("helvetica", size=10)
     if score < 50:
         verdict = "Verdict: REVISE RESUME. Align experience with missing keywords in Section 2."
     elif score < 75:
@@ -121,7 +119,7 @@ def create_pdf_report(score, matched, missing, t_score, s_score, user_name):
 
     # Footer
     pdf.set_y(-12)
-    pdf.set_font("Arial", 'I', 8)
+    pdf.set_font("helvetica", 'I', 8)
     pdf.set_text_color(150, 150, 150)
     pdf.cell(0, 10, "AI Resume Analyzer Pro | Engineering Project 2026", align='C')
 
