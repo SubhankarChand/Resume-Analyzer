@@ -8,6 +8,7 @@ st.set_page_config(page_title="AI Resume Analyzer Pro", layout="wide")
 st.markdown("""
     <style>
     .metric-card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid #0366d6; }
+    .stProgress > div > div > div > div { background-color: #0366d6; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -36,6 +37,8 @@ if st.button("Analyze Now", type="primary", use_container_width=True):
             # A. Extract & Find Name
             raw_resume = extract_text(uploaded_file)
             entities = get_entities(raw_resume)
+            
+            # Smart Name Extraction: Use NER first, fallback to first line of PDF
             user_name = next((e[0] for e in entities if e[1] == 'PERSON'), None)
             if not user_name:
                 lines = [line.strip() for line in raw_resume.split('\n') if line.strip()]
@@ -64,24 +67,41 @@ if st.button("Analyze Now", type="primary", use_container_width=True):
 
             # D. Results UI
             st.divider()
+            st.subheader(f"Analysis for: {user_name}")
+            
             c1, c2, c3 = st.columns(3)
             c1.metric("Overall Match", f"{score}%")
             c2.metric("Tech Match", f"{t_score}%")
             c3.metric("Soft Skills", f"{s_score}%")
 
-            tab1, tab2, tab3 = st.tabs(["✅ Matched", "❌ Skill Gap", "📥 Download"])
+            # Visual Progress Bars
+            st.write(f"**Technical Match Progress**")
+            st.progress(t_score / 100)
+
+            tab1, tab2, tab3 = st.tabs(["✅ Matched Skills", "❌ Skill Gap", "📥 Download Report"])
             
             with tab1:
-                st.write(f"**Candidate:** {user_name}")
-                st.write("**Technical:** " + ", ".join(tech_m))
-                st.write("**Soft Skills:** " + ", ".join(soft_m))
+                st.success(f"Matched {len(matched)} key attributes!")
+                st.write("**Technical Matches:** " + (", ".join(tech_m) if tech_m else "None identified"))
+                st.write("**Soft Skill Matches:** " + (", ".join(soft_m) if soft_m else "None identified"))
             
             with tab2:
-                st.error(f"Missing Tech: {', '.join(tech_miss)}")
-                st.warning(f"Missing Soft Skills: {', '.join(soft_miss)}")
+                st.error(f"Missing Technical: {', '.join(tech_miss) if tech_miss else 'None'}")
+                st.warning(f"Missing Soft Skills: {', '.join(soft_miss) if soft_miss else 'None'}")
+                st.info("💡 Tip: Try incorporating these keywords into your experience descriptions naturally.")
 
             with tab3:
-                pdf_data = create_pdf_report(score, matched, missing, t_score, s_score, user_name)
-                st.download_button("Download Official PDF Report", pdf_data, file_name=f"{user_name}_Report.pdf", mime="application/pdf")
+                # Generate PDF
+                try:
+                    pdf_data = create_pdf_report(score, matched, missing, t_score, s_score, user_name)
+                    st.download_button(
+                        label="Download Official PDF Report", 
+                        data=pdf_data, 
+                        file_name=f"Report_{user_name.replace(' ', '_')}.pdf", 
+                        mime="application/pdf"
+                    )
+                except Exception as e:
+                    st.error(f"Error generating PDF: {e}")
+                    
     else:
-        st.error("Please provide both JD and Resume.")
+        st.error("Missing Input: Please provide both a Job Description and a Resume PDF.")
